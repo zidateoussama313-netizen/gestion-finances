@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion Finances</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .date-display {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            padding: 25px;
+            border-radius: 12px;
+            color: white;
+            text-align: center;
+        }
+
+        .card-income {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        .card-expense {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+        }
+
+        .card-profit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .card h3 {
+            font-size: 1em;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        .card .amount {
+            font-size: 2.5em;
+            font-weight: bold;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #ecf0f1;
+        }
+
+        .section-header h2 {
+            color: #2c3e50;
+            font-size: 1.8em;
+        }
+
+        .add-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .add-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .add-btn.expense {
+            background: #e74c3c;
+        }
+
+        .add-btn.expense:hover {
+            background: #c0392b;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        thead {
+            background: #34495e;
+            color: white;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 0.95em;
+            width: 100%;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        input[type="date"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .delete-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        .delete-btn:hover {
+            background: #c0392b;
+        }
+
+        .amount-positive {
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .amount-negative {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .export-section {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #ecf0f1;
+        }
+
+        .export-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            margin: 0 10px;
+        }
+
+        .export-btn:hover {
+            background: #229954;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            table {
+                font-size: 0.9em;
+            }
+
+            th, td {
+                padding: 10px 5px;
+            }
+
+            .summary-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💰 Gestion Financière</h1>
+        <div class="date-display" id="currentDate"></div>
+
+        <!-- Cartes de résumé -->
+        <div class="summary-cards">
+            <div class="card card-income">
+                <h3>💵 Total Entrées</h3>
+                <div class="amount" id="totalIncome">0.00 €</div>
+            </div>
+            <div class="card card-expense">
+                <h3>💸 Total Charges</h3>
+                <div class="amount" id="totalExpense">0.00 €</div>
+            </div>
+            <div class="card card-profit">
+                <h3>📊 Bénéfice Net</h3>
+                <div class="amount" id="netProfit">0.00 €</div>
+            </div>
+        </div>
+
+        <!-- Section Entrées -->
+        <div class="section">
+            <div class="section-header">
+                <h2>📈 Entrées d'Argent</h2>
+                <button class="add-btn" onclick="addIncomeRow()">➕ Ajouter</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 15%">Date</th>
+                        <th style="width: 30%">Description</th>
+                        <th style="width: 20%">Catégorie</th>
+                        <th style="width: 15%">Montant</th>
+                        <th style="width: 10%">Payé</th>
+                        <th style="width: 10%">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="incomeTable">
+                    <tr>
+                        <td><input type="date" value="2025-10-19" onchange="updateTotals()"></td>
+                        <td><input type="text" value="Vente Cheesecakes" onchange="updateTotals()"></td>
+                        <td>
+                            <select onchange="updateTotals()">
+                                <option>Ventes</option>
+                                <option>Commandes</option>
+                                <option>Events</option>
+                                <option>Autres</option>
+                            </select>
+                        </td>
+                        <td><input type="number" value="150" step="0.01" onchange="updateTotals()"></td>
+                        <td><input type="checkbox" checked onchange="updateTotals()"></td>
+                        <td><button class="delete-btn" onclick="deleteRow(this)">✕</button></td>
+                    </tr>
+                    <tr>
+                        <td><input type="date" value="2025-10-18" onchange="updateTotals()"></td>
+                        <td><input type="text" value="Glaçage Royal x5" onchange="updateTotals()"></td>
+                        <td>
+                            <select onchange="updateTotals()">
+                                <option selected>Commandes</option>
+                                <option>Ventes</option>
+                                <option>Events</option>
+                                <option>Autres</option>
+                            </select>
+                        </td>
+                        <td><input type="number" value="125" step="0.01" onchange="updateTotals()"></td>
+                        <td><input type="checkbox" checked onchange="updateTotals()"></td>
+                        <td><button class="delete-btn" onclick="deleteRow(this)">✕</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Section Charges -->
+        <div class="section">
+            <div class="section-header">
+                <h2>📉 Charges & Dépenses</h2>
+                <button class="add-btn expense" onclick="addExpenseRow()">➕ Ajouter</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 15%">Date</th>
+                        <th style="width: 30%">Description</th>
+                        <th style="width: 20%">Catégorie</th>
+                        <th style="width: 15%">Montant</th>
+                        <th style="width: 10%">Payé</th>
+                        <th style="width: 10%">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="expenseTable">
+                    <tr>
+                        <td><input type="date" value="2025-10-19" onchange="updateTotals()"></td>
+                        <td><input type="text" value="Ingrédients (fromage, crème)" onchange="updateTotals()"></td>
+                        <td>
+                            <select onchange="updateTotals()">
+                                <option selected>Matières premières</option>
+                                <option>Loyer</option>
+                                <option>Électricité</option>
+                                <option>Équipement</option>
+                                <option>Marketing</option>
+                                <option>Transport</option>
+                                <option>Autres</option>
+                            </select>
+                        </td>
+                        <td><input type="number" value="45" step="0.01" onchange="updateTotals()"></td>
+                        <td><input type="checkbox" checked onchange="updateTotals()"></td>
+                        <td><button class="delete-btn" onclick="deleteRow(this)">✕</button></td>
+                    </tr>
+                    <tr>
+                        <td><input type="date" value="2025-10-18" onchange="updateTotals()"></td>
+                        <td><input type="text" value="Emballages et étiquettes" onchange="updateTotals()"></td>
+                        <td>
+                            <select onchange="updateTotals()">
+                                <option>Matières premières</option>
+                                <option>Loyer</option>
+                                <option>Électricité</option>
+                                <option selected>Équipement</option>
+                                <option>Marketing</option>
+                                <option>Transport</option>
+                                <option>Autres</option>
+                            </select>
+                        </td>
+                        <td><input type="number" value="30" step="0.01" onchange="updateTotals()"></td>
+                        <td><input type="checkbox" checked onchange="updateTotals()"></td>
+                        <td><button class="delete-btn" onclick="deleteRow(this)">✕</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Export -->
+        <div class="export-section">
+            <button class="export-btn" onclick="printTable()">🖨️ Imprimer</button>
+            <button class="export-btn" onclick="exportToCSV()">📥 Exporter CSV</button>
+        </div>
+    </div>
+
+    <script>
+        // Afficher la date actuelle
+        function displayCurrentDate() {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const today = new Date().toLocaleDateString('fr-FR', options);
+            document.getElementById('currentDate').textContent = today;
+        }
+
+        // Ajouter une ligne d'entrée
+        function addIncomeRow() {
+            const tbody = document.getElementById('incomeTable');
+            const today = new Date().toISOString().split('T')[0];
+            const newRow = `
+                <tr>
+                    <td><input type="date" value="${today}" onchange="updateTotals()"></td>
+                    <td><input type="text" placeholder="Description" onchange="updateTotals()"></td>
+                    <td>
+                        <select onchange="updateTotals()">
+                            <option>Ventes</option>
+                            <option>Commandes</option>
+                            <option>Events</option>
+                            <option>Autres</option>
+                        </select>
+                    </td>
+                    <td><input type="number" value="0" step="0.01" onchange="updateTotals()"></td>
+                    <td><input type="checkbox" onchange="updateTotals()"></td>
+                    <td><button class="delete-btn" onclick="deleteRow(this)">✕</button></td>
+                </tr>
+            `;
+            tbody.insertAdjacentHTML('beforeend', newRow);
+        }
+
+        // Ajouter une ligne de charge
+        function addExpenseRow() {
+            const tbody = document.getElementById('expenseTable');
+            const today = new Date().toISOString().split('T')[0];
+            const newRow = `
+                <tr>
+                    <td><input type="date" value="${today}" onchange="updateTotals()"></td>
+                    <td><input type="text" placeholder="Description" onchange="updateTotals()"></td>
+                    <td>
+                        <select onchange="updateTotals()">
+                            <option>Matières premières</option>
+                            <option>Loyer</option>
+                            <option>Électricité</option>
+                            <option>Équipement</option>
+                            <option>Marketing</option>
+                            <option>Transport</option>
+                            <option>Autres</option>
+                        </select>
+                    </td>
+                    <td><input type="number" value="0" step="0.01" onchange="updateTotals()"></td>
+                    <td><input type="checkbox" onchange="updateTotals()"></td>
+                    <td><button class="delete-btn" onclick="deleteRow(this)">✕</button></td>
+                </tr>
+            `;
+            tbody.insertAdjacentHTML('beforeend', newRow);
+        }
+
+        // Supprimer une ligne
+        function deleteRow(btn) {
+            btn.closest('tr').remove();
+            updateTotals();
+        }
+
+        // Calculer les totaux
+        function updateTotals() {
+            let totalIncome = 0;
+            let totalExpense = 0;
+
+            // Calculer les entrées
+            const incomeRows = document.querySelectorAll('#incomeTable tr');
+            incomeRows.forEach(row => {
+                const amount = parseFloat(row.querySelector('input[type="number"]').value) || 0;
+                totalIncome += amount;
+            });
+
+            // Calculer les charges
+            const expenseRows = document.querySelectorAll('#expenseTable tr');
+            expenseRows.forEach(row => {
+                const amount = parseFloat(row.querySelector('input[type="number"]').value) || 0;
+                totalExpense += amount;
+            });
+
+            const netProfit = totalIncome - totalExpense;
+
+            // Mettre à jour l'affichage
+            document.getElementById('totalIncome').textContent = totalIncome.toFixed(2) + ' €';
+            document.getElementById('totalExpense').textContent = totalExpense.toFixed(2) + ' €';
+            document.getElementById('netProfit').textContent = netProfit.toFixed(2) + ' €';
+        }
+
+        // Imprimer
+        function printTable() {
+            window.print();
+        }
+
+        // Exporter en CSV
+        function exportToCSV() {
+            let csv = '';
+            
+            // En-tête principal
+            csv += 'GESTION FINANCIÈRE\n';
+            csv += 'Date d\'export: ' + new Date().toLocaleDateString('fr-FR') + '\n\n';
+            
+            // Résumé
+            csv += 'RÉSUMÉ\n';
+            csv += 'Total Entrées,' + document.getElementById('totalIncome').textContent + '\n';
+            csv += 'Total Charges,' + document.getElementById('totalExpense').textContent + '\n';
+            csv += 'Bénéfice Net,' + document.getElementById('netProfit').textContent + '\n\n';
+            
+            // Section ENTRÉES
+            csv += '📈 ENTRÉES D\'ARGENT\n';
+            csv += 'Date,Description,Catégorie,Montant,Payé\n';
+            
+            const incomeRows = document.querySelectorAll('#incomeTable tr');
+            let totalIncome = 0;
+            incomeRows.forEach(row => {
+                const cells = row.querySelectorAll('input, select');
+                const date = cells[0].value;
+                const desc = cells[1].value.replace(/"/g, '""'); // Échapper les guillemets
+                const cat = cells[2].value;
+                const amount = cells[3].value;
+                const paid = cells[4].checked ? 'Oui' : 'Non';
+                csv += `${date},"${desc}",${cat},${amount} €,${paid}\n`;
+                totalIncome += parseFloat(amount) || 0;
+            });
+            csv += `\nTotal Entrées,,,,${totalIncome.toFixed(2)} €\n\n`;
+            
+            // Section CHARGES
+            csv += '📉 CHARGES & DÉPENSES\n';
+            csv += 'Date,Description,Catégorie,Montant,Payé\n';
+            
+            const expenseRows = document.querySelectorAll('#expenseTable tr');
+            let totalExpense = 0;
+            expenseRows.forEach(row => {
+                const cells = row.querySelectorAll('input, select');
+                const date = cells[0].value;
+                const desc = cells[1].value.replace(/"/g, '""'); // Échapper les guillemets
+                const cat = cells[2].value;
+                const amount = cells[3].value;
+                const paid = cells[4].checked ? 'Oui' : 'Non';
+                csv += `${date},"${desc}",${cat},${amount} €,${paid}\n`;
+                totalExpense += parseFloat(amount) || 0;
+            });
+            csv += `\nTotal Charges,,,,${totalExpense.toFixed(2)} €\n\n`;
+            
+            // Totaux finaux
+            const netProfit = totalIncome - totalExpense;
+            csv += 'BILAN FINAL\n';
+            csv += `Bénéfice Net,,,,${netProfit.toFixed(2)} €\n`;
+
+            // Télécharger avec BOM UTF-8 pour Excel
+            const BOM = '\uFEFF';
+            const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Gestion_Finances_' + new Date().toISOString().split('T')[0] + '.csv';
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Initialiser
+        displayCurrentDate();
+        updateTotals();
+    </script>
+</body>
+</html>
